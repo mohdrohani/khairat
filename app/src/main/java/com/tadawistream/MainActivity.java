@@ -6,17 +6,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
-
 import android.os.Bundle;
 import android.net.Uri;
 import android.app.Activity;
 import android.widget.MediaController;
-import android.widget.Toast;
 import android.widget.VideoView;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Inet4Address;
@@ -40,7 +37,7 @@ public class MainActivity extends Activity
     public static final String serverIPPrefFile = "ServerIPFile" ;
     SharedPreferences.Editor editorServerIP;
     SharedPreferences preferencesServerIP;
-    private int mCurrentPosition = 0;
+    private int mCurrentPosition;
     private static final String PLAYBACK_TIME = "play_time";
     VideoView videoView;
     Uri uri;
