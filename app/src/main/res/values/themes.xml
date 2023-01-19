@@ -1,4 +1,3 @@
 <resources>
-
     <style name="Theme.TadawiStream" parent="@style/Theme.Leanback" />
 </resources>

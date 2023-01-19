@@ -9,7 +9,9 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.net.Uri;
 import android.app.Activity;
+import android.webkit.WebView;
 import android.widget.MediaController;
+import android.widget.Toast;
 import android.widget.VideoView;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
@@ -37,7 +39,7 @@ public class MainActivity extends Activity
     public static final String serverIPPrefFile = "ServerIPFile" ;
     SharedPreferences.Editor editorServerIP;
     SharedPreferences preferencesServerIP;
-    private int mCurrentPosition;
+
     private static final String PLAYBACK_TIME = "play_time";
     VideoView videoView;
     Uri uri;
@@ -45,6 +47,7 @@ public class MainActivity extends Activity
     String urlPlay;
     MediaController mediaController;
     MediaPlayer mainMP;
+    String videoDuration="";
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -52,7 +55,7 @@ public class MainActivity extends Activity
         this.getIntent().setType("video/*");
         setContentView(R.layout.activity_main);
         if (savedInstanceState != null) {
-            mCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+            savedInstanceState.getInt(PLAYBACK_TIME);
         }
         //System.out.println("inside OnCreate");
         receiver = new BootUpReceiver();
@@ -62,11 +65,9 @@ public class MainActivity extends Activity
             if(isNetworkConnected())
             {
                 //Toast.makeText(this, "is First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
-                //System.out.println("Network Connected");
-                if(!isFirstTime())
+                //System.out.println("is First Time:"+isFirstTime());
+                if(isFirstTime())
                 {
-                    //Toast.makeText(this, "is First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
-                    //System.out.println("It is First Time");
                     Intent intent = new Intent(this, init.class);
                     startActivityForResult(intent, 2);
                 }
@@ -84,10 +85,8 @@ public class MainActivity extends Activity
                         }
                         else
                         {
-                            //Toast.makeText(this, "Cannot Access Server", Toast.LENGTH_LONG).show();
-                            System.out.println("Server not reachable");
+                            Toast.makeText(this, "لا يوجد أتصال مع السيرفر الرجاء التأكد", Toast.LENGTH_LONG).show();
                         }
-
                     }
                     else
                     {
@@ -97,8 +96,7 @@ public class MainActivity extends Activity
                         }
                         else
                         {
-                            //Toast.makeText(this, "Cannot Access Server", Toast.LENGTH_LONG).show();
-                            System.out.println("Server not reachable");
+                            Toast.makeText(this, "لا يوجد أتصال مع السيرفر الرجاء التأكد", Toast.LENGTH_LONG).show();
                         }
                     }
                 }
@@ -122,14 +120,13 @@ public class MainActivity extends Activity
         {
             System.out.println("Error On Create:"+e.toString());
         }
-
     }
 
     @Override
     protected void onStart()
     {
         super.onStart();
-        System.out.println("inside OnStart");
+        //System.out.println("inside OnStart");
         intentFilter.addCategory(getPackageName()+"android.intent.category.DEFAULT");
         intentFilter.addAction(getPackageName()+"android.intent.action.BOOT_COMPLETED");
         intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_BOOT_COMPLETED");
@@ -144,7 +141,7 @@ public class MainActivity extends Activity
     @Override
     protected void onStop() {
         super.onStop();
-        System.out.println("inside OnStop");
+        //System.out.println("inside OnStop");
         unregisterReceiver(receiver);
     }
 
@@ -152,14 +149,14 @@ public class MainActivity extends Activity
     protected void onResume()
     {
         super.onResume();
-        System.out.println("inside OnResume");
+        //System.out.println("inside OnResume");
         registerReceiver(receiver, intentFilter);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        System.out.println("inside OnDestroy");
+        //System.out.println("inside OnDestroy");
         unregisterReceiver(receiver);
     }
 
@@ -174,7 +171,7 @@ public class MainActivity extends Activity
                 if (resultCode == RESULT_OK)
                 {
                     setServerIP(data.getStringExtra("IP_Add"));
-                    addDataToDatabase(getTV_IPaddress(),getTV_MacAddress(),getServerIP()); //Today
+                    addDataToDatabase(getTvIP(),getTV_MacAddress(),getServerIP()); //Today
                     //getMedia(getTV_MacAddress(),getServerIP());
                     if(serverReachable(getServerIP()))
                     {
@@ -191,9 +188,7 @@ public class MainActivity extends Activity
 
     public void playVideo()
     {
-        //System.out.println("Inside PlayVideo");
         urlPlay= "http://"+getServerIP()+"/getMedia.php";
-        System.out.println("Inside PlayVideo URL :"+urlPlay);
         try
         {
             RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
@@ -205,11 +200,9 @@ public class MainActivity extends Activity
                     try
                     {
                         mainResponse=response;
-                        System.out.println("video url :"+response);
                         videoView = (VideoView) findViewById(R.id.videoView1);
                         uri = Uri.parse(mainResponse);
                         videoView.setVideoURI(uri);
-                        System.out.println("video uri :"+uri.toString());
                         mediaController = new MediaController(MainActivity.this);
                         mediaController.setAnchorView(videoView);
                         mediaController.setAnimationCacheEnabled(true);
@@ -222,11 +215,12 @@ public class MainActivity extends Activity
                                 mp.start();
                             }
                         });
+                        //System.out.println("video url :"+response);
                         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mp)
                             {
-                                reconfigeVideo();
+                                buildVideo();
                             }
                         });
                     }
@@ -269,7 +263,7 @@ public class MainActivity extends Activity
         }
     }
 
-    public void reconfigeVideo()
+    public void buildVideo()
     {
         try
         {
@@ -351,7 +345,7 @@ public class MainActivity extends Activity
         }
     }
 
-    public String getTV_IPaddress()
+    public String getTvIP()
     {
         String sAddr="";
         if(isWifiConnected())
@@ -508,7 +502,7 @@ public class MainActivity extends Activity
     private void setServerIP(String ipaddress)
     {
         //Toast.makeText(this, "IP address :"+ipaddress, Toast.LENGTH_LONG).show();
-        System.out.println("IP address :"+ipaddress);
+        //System.out.println("IP address :"+ipaddress);
         preferencesServerIP=getSharedPreferences(serverIPPrefFile, this.MODE_PRIVATE);
         editorServerIP = preferencesServerIP.edit();
         editorServerIP.putString("serverIP", ipaddress);
@@ -517,35 +511,32 @@ public class MainActivity extends Activity
 
     private String getServerIP()
     {
-        preferencesServerIP= getSharedPreferences(serverIPPrefFile, this.MODE_PRIVATE);;
+        preferencesServerIP= getSharedPreferences(serverIPPrefFile, this.MODE_PRIVATE);
         String servIP = preferencesServerIP.getString("serverIP",null);
         return servIP;
     }
 
     private boolean isFirstTime()
     {
-        SharedPreferences preferencesRunBefore= getSharedPreferences(runBeforePrefFile, this.MODE_PRIVATE);;
+        SharedPreferences preferencesRunBefore= getSharedPreferences(runBeforePrefFile, this.MODE_PRIVATE);
         boolean ranBefore = preferencesRunBefore.contains("runBefore");
-        //System.out.println("Ran Before="+ranBefore);
-        //System.out.println("Server IP="+getServerIP());
-        //System.out.println("equal to blank:"+(getServerIP()==""));
-        //System.out.println("equal to null:"+(getServerIP()==null));
-
         if (!ranBefore)
         {
+            //System.out.println("Is First Time "+true);
             SharedPreferences.Editor editorRunBefore = preferencesRunBefore.edit();
             editorRunBefore.putBoolean("runBefore", true);
             editorRunBefore.commit();
+            return true;
         }
         else
         {
-            System.out.println("Ran Before="+ranBefore);
-            System.out.println("Server IP="+getServerIP());
+            //System.out.println("Is First Time "+false);
+            //System.out.println("Server IP="+getServerIP());
+            return false;
         }
-        return ranBefore;
     }
 
-    public static boolean serverReachable(String ip) throws IOException
+    public boolean serverReachable(String ip) throws IOException
     {
         boolean reachable=false;
         //System.out.println("inside function serverReachable");
@@ -557,8 +548,12 @@ public class MainActivity extends Activity
 
         if ((line = stdInput.readLine()) != null)
         {
-            System.out.println("Line="+line);
+            //System.out.println("Line="+line);
             reachable=true;
+        }
+        if(!reachable)
+        {
+            Toast.makeText(this, "Cannot Access Server لا يمكن الوصول الي السيرفر", Toast.LENGTH_LONG).show();
         }
         //System.out.println("after if");
         //System.out.println("Reachable="+reachable);
@@ -567,137 +562,54 @@ public class MainActivity extends Activity
 
     private void addDataToDatabase(String tvIP, String tvMac, String serverIP)
     {
-        //String url = "http://"+getServerIP()+"/addTVs.php";
         String url = "http://"+serverIP+"/addTVs.php";
-        //Toast.makeText(this, "URL addTVs="+url, Toast.LENGTH_LONG).show();
-        System.out.println("URL addTVs :"+url);
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>()
-        {
-            @Override
-            public void onResponse(String response)
-            {
-                try
+        StringRequest request = new
+                StringRequest
+                (Request.Method.POST, url, new com.android.volley.Response.Listener<String>()
                 {
-                    System.out.println("Response :" + response);
-                }
-                catch (Exception e)
+                    @Override
+                    public void onResponse(String response)
+                    {
+                        try
+                        {
+                            //System.out.println("Data inserted to database:" + response);
+                        }
+                        catch (Exception e)
+                        {
+                            System.out.println("AddDataToDatabase Error :" + e.toString());
+                        }
+                    }
+                },
+                new com.android.volley.Response.ErrorListener()
                 {
-                    System.out.println("AddDataToDatabase Error :" + e.toString());
+                    @Override
+                    public void onErrorResponse(VolleyError error)
+                    {
+                        System.out.println("Fail to insert data to database = " + error.toString());
+                    }
                 }
-            }
-        }, new com.android.volley.Response.ErrorListener()
-        {
-            @Override
-            public void onErrorResponse(VolleyError error)
-            {
-                System.out.println("Fail to get response = " + error.toString());
-            }
-        })
-        {
-            @Override
-            public String getBodyContentType()
-            {
-                return "application/x-www-form-urlencoded; charset=UTF-8";
-            }
-
-            @Override
-            protected Map<String, String> getParams()
-            {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("tvIP", tvIP);
-                params.put("tvMac", tvMac);
-                params.put("serverIP", serverIP);
-                System.out.println("AddDataToDatabase TvIP :"+params.get("tvIP"));
-                System.out.println("AddDataToDatabase TvMac :"+params.get("tvMac"));
-                return params;
-            }
-        };
+                )
+                {
+                    @Override
+                    public String getBodyContentType()
+                    {
+                        return "application/x-www-form-urlencoded; charset=UTF-8";
+                    }
+                    @Override
+                    protected Map<String, String> getParams()
+                    {
+                        Map<String, String> params = new HashMap<String, String>();
+                        params.put("tvIP", tvIP);
+                        params.put("tvMac", tvMac);
+                        params.put("serverIP", serverIP);
+                        //System.out.println("AddDataToDatabase TvIP :"+params.get("tvIP"));
+                        //System.out.println("AddDataToDatabase TvMac :"+params.get("tvMac"));
+                        return params;
+                    }
+                };
         queue.add(request);
     }
-
-    /*public void getMedia(String tvMac, String serverIP)
-    {
-        String url = "http://"+serverIP+"/getMedia.php";
-        Toast.makeText(this, "URL="+url, Toast.LENGTH_LONG).show();
-        //final String[] mediaUrl = new String[1];
-
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        // on below line we are calling a string
-        // request method to post the data to our API
-        // in this we are calling a post method.
-        StringRequest request = new StringRequest (Request.Method.POST,url,new com.android.volley.Response.Listener<String>()
-        {
-            @Override
-            public void onResponse(String response)
-            {
-                try
-                {
-                    setMediaUrl(response);
-                    //mStr[0]=response;
-                    System.out.println("mediaStr=" + response.toString());
-                    //Toast.makeText(MainActivity.this, response.toString(), Toast.LENGTH_LONG).show();
-
-                }
-                catch (Exception e)
-                {
-                    System.out.println("JSon Error :" + e.toString());
-                }
-                // and setting data to edit text as empty
-
-            }
-        }, new com.android.volley.Response.ErrorListener()
-        {
-            @Override
-            public void onErrorResponse(VolleyError error)
-            {
-                // method to handle errors.
-                System.out.println("Fail to get response = " + error.toString());
-                //Toast.makeText(MainActivity.this, "Fail to get response = " + error, Toast.LENGTH_SHORT).show();
-            }
-        })
-        {
-            @Override
-            public String getBodyContentType()
-            {
-                // as we are passing data in the form of url encoded
-                // so we are passing the content type below
-                return "application/x-www-form-urlencoded; charset=UTF-8";
-            }
-
-            @Override
-            protected Map<String, String> getParams()
-            {
-
-                // below line we are creating a map for storing
-                // our values in key and value pair.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // on below line we are passing our
-                // key and value pair to our parameters.
-                params.put("tvMac", tvMac);
-
-                //System.out.println("Params 1"+params.get("tvMac"));
-                // at last we are returning our params.
-                return params;
-            }
-        };
-        // below line is to make
-        // a json object request.
-        queue.add(request);
-    }*/
-
-    /*public void setMediaUrl(String resp)
-    {
-        mediaLink=resp;
-        //System.out.println("Inside setMedia:"+mediaLink);
-    }
-    public String getMediaUrl()
-    {
-        //System.out.println("Inside getMedia:"+mediaLink);
-        return mediaLink;
-    }*/
-
 }
 
 

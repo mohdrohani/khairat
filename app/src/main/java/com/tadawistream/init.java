@@ -38,8 +38,10 @@ public class init extends Activity
         button2.setOnClickListener(new OnClickListener()
         {
             @Override
-            public void onClick(View arg0) {
-                try {
+            public void onClick(View arg0)
+            {
+                try
+                {
                     finishAffinity();//finishing activity
                     System.exit(0);
 
