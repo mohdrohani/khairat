@@ -81,7 +81,7 @@ public class MainActivity extends Activity
                         {
                             Intent intent = new Intent(this, init.class);
                             startActivityForResult(intent, 2);
-                            //System.out.println("Server IP if Null:"+getServerIP());
+                            System.out.println("Server IP if Null:"+getServerIP());
                         }
                         else
                         {
