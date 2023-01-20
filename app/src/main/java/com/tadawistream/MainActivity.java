@@ -58,10 +58,11 @@ public class MainActivity extends Activity
             savedInstanceState.getInt(PLAYBACK_TIME);
         }
         //System.out.println("inside OnCreate");
-        receiver = new BootUpReceiver();
-        intentFilter = new IntentFilter();
+
         try
         {
+            receiver = new BootUpReceiver();
+            intentFilter = new IntentFilter();
             if(isNetworkConnected())
             {
                 //Toast.makeText(this, "is First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
@@ -81,7 +82,7 @@ public class MainActivity extends Activity
                         {
                             Intent intent = new Intent(this, init.class);
                             startActivityForResult(intent, 2);
-                            System.out.println("Server IP if Null:"+getServerIP());
+                            //System.out.println("Server IP if Null:"+getServerIP());
                         }
                         else
                         {
@@ -573,7 +574,7 @@ public class MainActivity extends Activity
                     {
                         try
                         {
-                            //System.out.println("Data inserted to database:" + response);
+                            System.out.println("Data inserted to database:" + response);
                         }
                         catch (Exception e)
                         {
