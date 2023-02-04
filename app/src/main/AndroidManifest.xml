@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
 
@@ -20,7 +23,7 @@
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
-        android:banner="@drawable/ic_launcher_logo"
+        android:banner="@drawable/ic_launcher_foreground"
         android:logo="@drawable/ic_launcher_logo"
         android:icon="@drawable/ic_launcher_icon"
         android:installLocation="internalOnly"
@@ -31,7 +34,7 @@
         tools:targetApi="m">
         <activity
             android:name=".init"
-            android:exported="false">
+            android:exported="true">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
@@ -60,19 +63,18 @@
 
         <receiver
             android:name=".BootUpReceiver"
-            android:directBootAware="true"
+            android:exported="true"
             android:enabled="true"
-            android:exported="false"
-            tools:targetApi="n">
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.ACTION_BOOT_COMPLETED" />
-                <action android:name="android.intent.action.REBOOT" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.ACTION_SHUTDOWN" />
+                <action android:name="android.intent.action.QUICKBOOT_POWER" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.REBOOT" />
+                <action android:name="android.intent.action.ACTION_SHUTDOWN" />
             </intent-filter>
         </receiver>
+
     </application>
 </manifest>

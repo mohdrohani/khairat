@@ -30,6 +30,8 @@ public class init extends Activity
             public void onClick(View arg0) {
                 String message=editText1.getText().toString();
                 intent=new Intent();
+                intent.setAction(Intent.ACTION_SEND);
+                intent.setType("text/plain");
                 intent.putExtra("IP_Add",message);
                 setResult(RESULT_OK,intent);
                 finish();//finishing activity

@@ -9,7 +9,6 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.net.Uri;
 import android.app.Activity;
-import android.webkit.WebView;
 import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -35,6 +34,7 @@ public class MainActivity extends Activity
 {
     BootUpReceiver receiver;
     IntentFilter intentFilter;
+    //IntentFilter conFilter;
     public static final String runBeforePrefFile = "RunBeforeFile" ;
     public static final String serverIPPrefFile = "ServerIPFile" ;
     SharedPreferences.Editor editorServerIP;
@@ -43,11 +43,10 @@ public class MainActivity extends Activity
     private static final String PLAYBACK_TIME = "play_time";
     VideoView videoView;
     Uri uri;
-    String mainResponse;
+    //String mainResponse;
     String urlPlay;
     MediaController mediaController;
     MediaPlayer mainMP;
-    String videoDuration="";
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -63,6 +62,16 @@ public class MainActivity extends Activity
         {
             receiver = new BootUpReceiver();
             intentFilter = new IntentFilter();
+            //conFilter=new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            intentFilter.addCategory(getPackageName()+"android.intent.category.DEFAULT");
+            intentFilter.addAction(getPackageName()+"android.net.conn.CONNECTIVITY_CHANGE");
+            intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_BOOT_COMPLETED");
+            intentFilter.addAction(getPackageName()+"android.intent.action.REBOOT");
+            intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_SHUTDOWN");
+            intentFilter.addAction(getPackageName()+"android.intent.action.LOCKED_BOOT_COMPLETED");
+            //registerReceiver(receiver, conFilter);
+            registerReceiver(receiver, intentFilter);
+
             if(isNetworkConnected())
             {
                 //Toast.makeText(this, "is First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
@@ -76,28 +85,16 @@ public class MainActivity extends Activity
                 {
                     //Toast.makeText(this, "is Not First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
                     //System.out.println("It is not First Time");
-                    if((getServerIP() == null) || (getServerIP() == ""))
+                    if((getServerIP() == null) || (getServerIP().equals("")))
                     {
-                        if(serverReachable(getServerIP()))
-                        {
-                            Intent intent = new Intent(this, init.class);
-                            startActivityForResult(intent, 2);
-                            //System.out.println("Server IP if Null:"+getServerIP());
-                        }
-                        else
-                        {
-                            Toast.makeText(this, "لا يوجد أتصال مع السيرفر الرجاء التأكد", Toast.LENGTH_LONG).show();
-                        }
+                        Intent intent = new Intent(this, init.class);
+                        startActivityForResult(intent, 2);
                     }
                     else
                     {
-                        if(serverReachable(getServerIP()))
+                        if(executeCommand(getServerIP()))
                         {
                             playVideo();
-                        }
-                        else
-                        {
-                            Toast.makeText(this, "لا يوجد أتصال مع السيرفر الرجاء التأكد", Toast.LENGTH_LONG).show();
                         }
                     }
                 }
@@ -124,34 +121,24 @@ public class MainActivity extends Activity
     }
 
     @Override
-    protected void onStart()
-    {
+    protected void onStart() {
         super.onStart();
-        //System.out.println("inside OnStart");
-        intentFilter.addCategory(getPackageName()+"android.intent.category.DEFAULT");
-        intentFilter.addAction(getPackageName()+"android.intent.action.BOOT_COMPLETED");
-        intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_BOOT_COMPLETED");
-        intentFilter.addAction(getPackageName()+"android.intent.action.REBOOT");
-        intentFilter.addAction(getPackageName()+"android.intent.action.QUICKBOOT_POWERON");
-        intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_SHUTDOWN");
-        intentFilter.addAction(getPackageName()+"android.intent.action.LOCKED_BOOT_COMPLETED");
+        //System.out.println("inside OnDestroy");
+        registerReceiver(receiver, intentFilter);
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //System.out.println("inside OnDestroy");
         registerReceiver(receiver, intentFilter);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        //System.out.println("inside OnStop");
+        //System.out.println("inside OnDestroy");
         unregisterReceiver(receiver);
-    }
-
-    @Override
-    protected void onResume()
-    {
-        super.onResume();
-        //System.out.println("inside OnResume");
-        registerReceiver(receiver, intentFilter);
     }
 
     @Override
@@ -159,6 +146,7 @@ public class MainActivity extends Activity
         super.onDestroy();
         //System.out.println("inside OnDestroy");
         unregisterReceiver(receiver);
+
     }
 
     @Override
@@ -174,7 +162,7 @@ public class MainActivity extends Activity
                     setServerIP(data.getStringExtra("IP_Add"));
                     addDataToDatabase(getTvIP(),getTV_MacAddress(),getServerIP()); //Today
                     //getMedia(getTV_MacAddress(),getServerIP());
-                    if(serverReachable(getServerIP()))
+                    if(executeCommand(getServerIP()))
                     {
                         playVideo();
                     }
@@ -200,19 +188,25 @@ public class MainActivity extends Activity
                 {
                     try
                     {
-                        mainResponse=response;
+                        //mainResponse=response;
+                        //uri = Uri.parse(mainResponse);
+                        uri = Uri.parse(response);
                         videoView = (VideoView) findViewById(R.id.videoView1);
-                        uri = Uri.parse(mainResponse);
+
                         videoView.setVideoURI(uri);
+                        videoView.requestFocus();
+
                         mediaController = new MediaController(MainActivity.this);
                         mediaController.setAnchorView(videoView);
                         mediaController.setAnimationCacheEnabled(true);
-                        videoView.requestFocus();
-                        videoView.setOnPreparedListener(new OnPreparedListener() {
+
+
+                        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                             @Override
                             public void onPrepared(MediaPlayer mp)
                             {
                                 mainMP=mp;
+                                mp.setLooping(true);
                                 mp.start();
                             }
                         });
@@ -221,13 +215,13 @@ public class MainActivity extends Activity
                             @Override
                             public void onCompletion(MediaPlayer mp)
                             {
-                                buildVideo();
+                                //buildVideo();
                             }
                         });
                     }
                     catch (Exception e)
                     {
-                        System.out.println("JSon Error :" + e.toString());
+                        System.out.println("يوجد خطأ في تشغيل الفيديو :" + e.toString());
                     }
                 }
             }, new com.android.volley.Response.ErrorListener()
@@ -235,7 +229,7 @@ public class MainActivity extends Activity
                 @Override
                 public void onErrorResponse(VolleyError error)
                 {
-                    System.out.println("PlayVideo Fail to get response = " + error.toString());
+                    System.out.println("يوجد خطأ في تشغيل الفيديو :" + error.toString());
                     //Toast.makeText(MainActivity.this, "Fail to get response = " + error, Toast.LENGTH_SHORT).show();
                 }
             })
@@ -264,7 +258,7 @@ public class MainActivity extends Activity
         }
     }
 
-    public void buildVideo()
+    /*public void buildVideo()
     {
         try
         {
@@ -309,7 +303,7 @@ public class MainActivity extends Activity
                     }
                     catch (Exception e)
                     {
-                        System.out.println("JSon Error :" + e.toString());
+                        System.out.println("يوجد خطأ في أعادة تشغيل الفيديو :" + e.toString());
                     }
                 }
             }, new com.android.volley.Response.ErrorListener()
@@ -344,7 +338,7 @@ public class MainActivity extends Activity
             //Toast.makeText(this, "Error connecting", Toast.LENGTH_LONG).show();
             System.out.println("Play Video Error connecting"+e.toString());
         }
-    }
+    }*/
 
     public String getTvIP()
     {
@@ -537,28 +531,47 @@ public class MainActivity extends Activity
         }
     }
 
-    public boolean serverReachable(String ip) throws IOException
+    private boolean executeCommand(String ip)
     {
-        boolean reachable=false;
-        //System.out.println("inside function serverReachable");
-        ProcessBuilder pb = new ProcessBuilder("ping", ip);
-        //ProcessBuilder pb = new ProcessBuilder("ping", "-c 5", ip);
-        BufferedReader stdInput = new BufferedReader(new InputStreamReader(pb.start().getInputStream()));
-        String line;
-        //ArrayList<String> output = new ArrayList<>();
+        boolean myReturn=false;
+        Runtime runtime = Runtime.getRuntime();
+        try
+        {
+            Process  mIpProcess = runtime.exec("/system/bin/ping -c 1 "+ip);
+            int mExitValue = mIpProcess.waitFor();
+            //System.out.println(" mExitValue "+mExitValue);
+            //Toast.makeText(this, " mExitValue "+mExitValue, Toast.LENGTH_LONG).show();
 
-        if ((line = stdInput.readLine()) != null)
-        {
-            //System.out.println("Line="+line);
-            reachable=true;
+            if(mExitValue==0){
+                myReturn=true;
+            }else{
+                myReturn=false;
+                AlertDialog alertDialog0 = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog0.setTitle("حالة أتصال الشاشه مع السيرفر");
+                alertDialog0.setMessage("لا يوجد أتصال مع السيرفر, يرجى التواصل بمدير تقنية المعلومات");
+                alertDialog0.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        dialog.dismiss();
+                        MainActivity.this.finish();
+                        System.exit(0);
+                    }
+                });
+                alertDialog0.show();
+            }
         }
-        if(!reachable)
+        catch (InterruptedException ignore)
         {
-            Toast.makeText(this, "Cannot Access Server لا يمكن الوصول الي السيرفر", Toast.LENGTH_LONG).show();
+            ignore.printStackTrace();
+            //System.out.println(" Exception:"+ignore);
         }
-        //System.out.println("after if");
-        //System.out.println("Reachable="+reachable);
-        return reachable;
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            //System.out.println(" Exception:"+e);
+        }
+        return myReturn;
     }
 
     private void addDataToDatabase(String tvIP, String tvMac, String serverIP)
