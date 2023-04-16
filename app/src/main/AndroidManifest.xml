@@ -6,9 +6,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:ignore="LeanbackUsesWifi" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
 
@@ -20,10 +19,8 @@
         android:required="false" />
 
     <application
-        android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
-        android:banner="@drawable/ic_launcher_foreground"
         android:logo="@drawable/ic_launcher_logo"
         android:icon="@drawable/ic_launcher_icon"
         android:installLocation="internalOnly"
@@ -31,7 +28,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TadawiStream"
         android:usesCleartextTraffic="true"
-        tools:targetApi="m">
+        tools:targetApi="m"
+        android:banner="@drawable/default_background">
         <activity
             android:name=".init"
             android:exported="true">

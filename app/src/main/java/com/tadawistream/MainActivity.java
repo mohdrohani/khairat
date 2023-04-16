@@ -13,10 +13,7 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnPreparedListener;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -29,6 +26,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import java.util.HashMap;
 import java.util.Map;
+import android.content.Context;
 
 public class MainActivity extends Activity
 {
@@ -43,7 +41,7 @@ public class MainActivity extends Activity
     private static final String PLAYBACK_TIME = "play_time";
     VideoView videoView;
     Uri uri;
-    //String mainResponse;
+    String mainResponse;
     String urlPlay;
     MediaController mediaController;
     MediaPlayer mainMP;
@@ -83,7 +81,6 @@ public class MainActivity extends Activity
                 }
                 else
                 {
-                    //Toast.makeText(this, "is Not First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
                     //System.out.println("It is not First Time");
                     if((getServerIP() == null) || (getServerIP().equals("")))
                     {
@@ -188,26 +185,27 @@ public class MainActivity extends Activity
                 {
                     try
                     {
-                        //mainResponse=response;
+                        mainResponse=response;
                         //uri = Uri.parse(mainResponse);
+                        Toast.makeText(MainActivity.this, "Msg1=>"+response, Toast.LENGTH_LONG).show();
+                        //showMsg("Msg1:",response);
                         uri = Uri.parse(response);
                         videoView = (VideoView) findViewById(R.id.videoView1);
 
                         videoView.setVideoURI(uri);
+
                         videoView.requestFocus();
 
                         mediaController = new MediaController(MainActivity.this);
                         mediaController.setAnchorView(videoView);
                         mediaController.setAnimationCacheEnabled(true);
-
-
                         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                             @Override
                             public void onPrepared(MediaPlayer mp)
                             {
                                 mainMP=mp;
-                                mp.setLooping(true);
-                                mp.start();
+                                //mp.setLooping(true);
+                                mainMP.start();
                             }
                         });
                         //System.out.println("video url :"+response);
@@ -215,13 +213,15 @@ public class MainActivity extends Activity
                             @Override
                             public void onCompletion(MediaPlayer mp)
                             {
-                                //buildVideo();
+                                buildVideo();
                             }
                         });
                     }
                     catch (Exception e)
                     {
-                        System.out.println("يوجد خطأ في تشغيل الفيديو :" + e.toString());
+                        //System.out.println("يوجد خطأ في تشغيل الفيديو :" + e.toString());
+                        Toast.makeText(MainActivity.this, "Msg2=>" + e, Toast.LENGTH_LONG).show();
+                        //showMsg("Msg2:",e.toString());
                     }
                 }
             }, new com.android.volley.Response.ErrorListener()
@@ -229,8 +229,9 @@ public class MainActivity extends Activity
                 @Override
                 public void onErrorResponse(VolleyError error)
                 {
-                    System.out.println("يوجد خطأ في تشغيل الفيديو :" + error.toString());
-                    //Toast.makeText(MainActivity.this, "Fail to get response = " + error, Toast.LENGTH_SHORT).show();
+                    //System.out.println("يوجد خطأ في تشغيل الفيديو :" + error.toString());
+                    Toast.makeText(MainActivity.this, "Msg3=>" + error.toString(), Toast.LENGTH_LONG).show();
+                    //showMsg("Msg3:",error.toString());
                 }
             })
             {
@@ -253,12 +254,13 @@ public class MainActivity extends Activity
         catch (Exception e)
         {
             // TODO: handle exception
-            //Toast.makeText(this, "Error connecting", Toast.LENGTH_LONG).show();
-            System.out.println("Play Video Error connecting"+e.toString());
+            Toast.makeText(MainActivity.this, "Msg4=>" + e, Toast.LENGTH_LONG).show();
+            //showMsg("Msg4:",e.toString());
+            //System.out.println("Play Video Error connecting"+e.toString());
         }
     }
 
-    /*public void buildVideo()
+    public void buildVideo()
     {
         try
         {
@@ -276,19 +278,22 @@ public class MainActivity extends Activity
                         }
                         else
                         {
+
                             mainResponse=response;
-                            //videoView = (VideoView) findViewById(R.id.videoView1);
+                            videoView = (VideoView) findViewById(R.id.videoView1);
                             uri = Uri.parse(mainResponse);
                             videoView.setVideoURI(uri);
-                            //MediaController mediaController = new MediaController(MainActivity.this);
+                            videoView.requestFocus();
+                            //mediaController = new MediaController(MainActivity.this);
                             //mediaController.setAnchorView(videoView);
                             //mediaController.setAnimationCacheEnabled(true);
-                            //videoView.requestFocus();
-                            videoView.setOnPreparedListener(new OnPreparedListener() {
+
+                            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
                                 public void onPrepared(MediaPlayer mp)
                                 {
-                                    mp.start();
+                                    mainMP=mp;
+                                    mainMP.start();
                                 }
                             });
                             videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -303,7 +308,9 @@ public class MainActivity extends Activity
                     }
                     catch (Exception e)
                     {
-                        System.out.println("يوجد خطأ في أعادة تشغيل الفيديو :" + e.toString());
+                        Toast.makeText(MainActivity.this, "Msg5=>" + e, Toast.LENGTH_LONG).show();
+                        //showMsg("Msg5:",e.toString());
+                        //System.out.println("يوجد خطأ في أعادة تشغيل الفيديو :" + e.toString());
                     }
                 }
             }, new com.android.volley.Response.ErrorListener()
@@ -311,7 +318,9 @@ public class MainActivity extends Activity
                 @Override
                 public void onErrorResponse(VolleyError error)
                 {
-                    System.out.println("PlayVideo Fail to get response = " + error.toString());
+                    Toast.makeText(MainActivity.this, "Msg6=>" + error.toString(), Toast.LENGTH_LONG).show();
+                    //showMsg("Msg6:",error.toString());
+                    //System.out.println("PlayVideo Fail to get response = " + error.toString());
                     //Toast.makeText(MainActivity.this, "Fail to get response = " + error, Toast.LENGTH_SHORT).show();
                 }
             })
@@ -335,10 +344,11 @@ public class MainActivity extends Activity
         catch (Exception e)
         {
             // TODO: handle exception
-            //Toast.makeText(this, "Error connecting", Toast.LENGTH_LONG).show();
-            System.out.println("Play Video Error connecting"+e.toString());
+            Toast.makeText(MainActivity.this, "Msg7=>" + e, Toast.LENGTH_LONG).show();
+            //showMsg("Msg7:",e.toString());
+            //System.out.println("Play Video Error connecting"+e.toString());
         }
-    }*/
+    }
 
     public String getTvIP()
     {
@@ -465,33 +475,50 @@ public class MainActivity extends Activity
             }
 
         }
+        Toast.makeText(MainActivity.this, "Msg8=>" + stringMac, Toast.LENGTH_LONG).show();
         return stringMac;
     }
+
+    /*private boolean isNetworkConnected()
+    {
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(this.CONNECTIVITY_SERVICE);
+        return cm.getActiveNetworkInfo() != null;
+    }*/
 
     private boolean isNetworkConnected()
     {
         ConnectivityManager cm = (ConnectivityManager) this.getSystemService(this.CONNECTIVITY_SERVICE);
-        return cm.getActiveNetworkInfo() != null;
+        return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
     }
 
     public Boolean isWifiConnected()
     {
+        Boolean res;
+        ConnectivityManager cm;
         if(isNetworkConnected()){
-            ConnectivityManager cm
-                    = (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
-            return (cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI);
+            cm= (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
+            res=(cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI);
         }
-        return false;
+        else
+        {
+            res=false;
+        }
+        return res;
     }
 
     public Boolean isEthernetConnected()
     {
+        Boolean res;
+        ConnectivityManager cm;
         if(isNetworkConnected()){
-            ConnectivityManager cm
-                    = (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
-            return (cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_ETHERNET);
+            cm= (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
+            res=(cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_ETHERNET);
         }
-        return false;
+        else
+        {
+            res=false;
+        }
+        return res;
     }
 
     private void setServerIP(String ipaddress)
@@ -540,7 +567,7 @@ public class MainActivity extends Activity
             Process  mIpProcess = runtime.exec("/system/bin/ping -c 1 "+ip);
             int mExitValue = mIpProcess.waitFor();
             //System.out.println(" mExitValue "+mExitValue);
-            //Toast.makeText(this, " mExitValue "+mExitValue, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, " mExitValue "+mExitValue, Toast.LENGTH_LONG).show();
 
             if(mExitValue==0){
                 myReturn=true;
@@ -564,11 +591,13 @@ public class MainActivity extends Activity
         catch (InterruptedException ignore)
         {
             ignore.printStackTrace();
+            Toast.makeText(this, "داخل ايكزيكيوت: "+ignore, Toast.LENGTH_LONG).show();
             //System.out.println(" Exception:"+ignore);
         }
         catch (IOException e)
         {
             e.printStackTrace();
+            Toast.makeText(this, "داخل ايكزيكيوت: "+ e, Toast.LENGTH_LONG).show();
             //System.out.println(" Exception:"+e);
         }
         return myReturn;
@@ -576,34 +605,33 @@ public class MainActivity extends Activity
 
     private void addDataToDatabase(String tvIP, String tvMac, String serverIP)
     {
-        String url = "http://"+serverIP+"/addTVs.php";
+        String url = "http://"+serverIP+"/php/addTVs.php";
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        StringRequest request = new
-                StringRequest
-                (Request.Method.POST, url, new com.android.volley.Response.Listener<String>()
+        StringRequest request = new StringRequest (Request.Method.POST, url, new com.android.volley.Response.Listener<String>()
                 {
                     @Override
                     public void onResponse(String response)
                     {
                         try
                         {
+                            Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
                             System.out.println("Data inserted to database:" + response);
                         }
                         catch (Exception e)
                         {
+                            Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
                             System.out.println("AddDataToDatabase Error :" + e.toString());
                         }
                     }
-                },
-                new com.android.volley.Response.ErrorListener()
+                },new com.android.volley.Response.ErrorListener()
                 {
                     @Override
                     public void onErrorResponse(VolleyError error)
                     {
+                        Toast.makeText(MainActivity.this,error.toString(),Toast.LENGTH_LONG).show();
                         System.out.println("Fail to insert data to database = " + error.toString());
                     }
-                }
-                )
+                })
                 {
                     @Override
                     public String getBodyContentType()
@@ -623,6 +651,20 @@ public class MainActivity extends Activity
                     }
                 };
         queue.add(request);
+    }
+    public void showMsg(String title, String msg)
+    {
+        AlertDialog alertDialog0 = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog0.setTitle(title);
+        alertDialog0.setMessage(msg);
+        alertDialog0.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.dismiss();
+            }
+        });
+        alertDialog0.show();
     }
 }
 
