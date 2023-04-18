@@ -20,8 +20,13 @@ public class BootUpReceiver extends BroadcastReceiver
             if (!Settings.canDrawOverlays(context.getApplicationContext()))
             {
                 context.startActivity(intentMain.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addCategory(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
-                Toast.makeText(context.getApplicationContext(),"متصل",Toast.LENGTH_LONG).show();
+                //Toast.makeText(context.getApplicationContext(),"متصل",Toast.LENGTH_LONG).show();
             }
+            else
+            {
+                Toast.makeText(context.getApplicationContext(),"غير متصل",Toast.LENGTH_LONG).show();
+            }
+
         }
     }
 }

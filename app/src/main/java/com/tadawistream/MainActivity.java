@@ -26,6 +26,8 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+
 import android.content.Context;
 
 public class MainActivity extends Activity
@@ -37,12 +39,13 @@ public class MainActivity extends Activity
     public static final String serverIPPrefFile = "ServerIPFile" ;
     SharedPreferences.Editor editorServerIP;
     SharedPreferences preferencesServerIP;
-
+    public static final String macAddressPrefFile = "MacAddressFile" ;
+    SharedPreferences.Editor editorMacAddress;
+    SharedPreferences preferencesMacAddress;
     private static final String PLAYBACK_TIME = "play_time";
     VideoView videoView;
     Uri uri;
-    String mainResponse;
-    String urlPlay;
+    String mainResponse,urlPlay;
     MediaController mediaController;
     MediaPlayer mainMP;
     @Override
@@ -51,6 +54,7 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         this.getIntent().setType("video/*");
         setContentView(R.layout.activity_main);
+
         if (savedInstanceState != null) {
             savedInstanceState.getInt(PLAYBACK_TIME);
         }
@@ -60,7 +64,6 @@ public class MainActivity extends Activity
         {
             receiver = new BootUpReceiver();
             intentFilter = new IntentFilter();
-            //conFilter=new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
             intentFilter.addCategory(getPackageName()+"android.intent.category.DEFAULT");
             intentFilter.addAction(getPackageName()+"android.net.conn.CONNECTIVITY_CHANGE");
             intentFilter.addAction(getPackageName()+"android.intent.action.ACTION_BOOT_COMPLETED");
@@ -89,6 +92,8 @@ public class MainActivity extends Activity
                     }
                     else
                     {
+                        //showMsg("ServerIP",getServerIP());
+                        //showMsg("TV information:","\n\r MAC :"+getMac());
                         if(executeCommand(getServerIP()))
                         {
                             playVideo();
@@ -98,22 +103,13 @@ public class MainActivity extends Activity
             }
             else
             {
-                AlertDialog alertDialog0 = new AlertDialog.Builder(MainActivity.this).create();
-                alertDialog0.setTitle("وضع أتصال الشاشه");
-                alertDialog0.setMessage("الشاشه ليست متصلة بشبكة واي فاي او سلكي");
-                alertDialog0.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int which)
-                    {
-                        dialog.dismiss();
-                    }
-                });
-                alertDialog0.show();
+                showMsg("وضع أتصال الشاشه","الشاشه ليست متصلة بشبكة واي فاي او سلكي");
             }
         }
         catch (Exception e)
         {
-            System.out.println("Error On Create:"+e.toString());
+            //System.out.println("Error On Create:"+e.toString());
+            showMsg("وضع أتصال الشاشه","الشاشه ليست متصلة بشبكة واي فاي او سلكي "+e.toString());
         }
     }
 
@@ -157,7 +153,20 @@ public class MainActivity extends Activity
                 if (resultCode == RESULT_OK)
                 {
                     setServerIP(data.getStringExtra("IP_Add"));
-                    addDataToDatabase(getTvIP(),getTV_MacAddress(),getServerIP()); //Today
+
+                    if(getTV_MacAddress()==null || getTV_MacAddress().equals(""))
+                    {
+                        setMac(randomMACAddress());
+                        //showMsg("TV information:","\n\r MAC :"+getMac());
+                        addDataToDatabase(getTvIP(),getMac(),getServerIP()); //Today
+                    }
+                    else
+                    {
+                        setMac(getTV_MacAddress());
+                        //showMsg("TV information:","\n\r MAC :"+getMac());
+                        addDataToDatabase(getTvIP(),getMac(),getServerIP()); //Today
+                    }
+
                     //getMedia(getTV_MacAddress(),getServerIP());
                     if(executeCommand(getServerIP()))
                     {
@@ -187,17 +196,16 @@ public class MainActivity extends Activity
                     {
                         mainResponse=response;
                         //uri = Uri.parse(mainResponse);
-                        Toast.makeText(MainActivity.this, "Msg1=>"+response, Toast.LENGTH_LONG).show();
-                        //showMsg("Msg1:",response);
-                        uri = Uri.parse(response);
+                        //Toast.makeText(MainActivity.this, "Msg1=>"+response.getBytes().toString(), Toast.LENGTH_LONG).show();
+                        //System.out.println("video url :"+response);
+                        //showMsg("Msg1:",response.substring(0,1000));
                         videoView = (VideoView) findViewById(R.id.videoView1);
-
+                        uri = Uri.parse(response);
                         videoView.setVideoURI(uri);
-
-                        videoView.requestFocus();
-
                         mediaController = new MediaController(MainActivity.this);
                         mediaController.setAnchorView(videoView);
+                        mediaController.setMediaPlayer(videoView);
+                        videoView.requestFocus();
                         mediaController.setAnimationCacheEnabled(true);
                         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                             @Override
@@ -206,6 +214,7 @@ public class MainActivity extends Activity
                                 mainMP=mp;
                                 //mp.setLooping(true);
                                 mainMP.start();
+                                //showMsg("Msg1:",mainResponse.toString());
                             }
                         });
                         //System.out.println("video url :"+response);
@@ -216,12 +225,19 @@ public class MainActivity extends Activity
                                 buildVideo();
                             }
                         });
+                        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener(){
+                            @Override
+                            public boolean onError(MediaPlayer mp, int what, int extra) {
+                                showMsg("يوجد خطأ في تشغيل الفيديو :","يوجد خطأ في تشغيل الفيديو");
+                                return false;
+                            }
+                        } );
                     }
                     catch (Exception e)
                     {
                         //System.out.println("يوجد خطأ في تشغيل الفيديو :" + e.toString());
-                        Toast.makeText(MainActivity.this, "Msg2=>" + e, Toast.LENGTH_LONG).show();
-                        //showMsg("Msg2:",e.toString());
+                        //Toast.makeText(MainActivity.this, "Msg2=>" + e.toString(), Toast.LENGTH_LONG).show();
+                        showMsg("يوجد خطأ في تشغيل الفيديو :",e.toString());
                     }
                 }
             }, new com.android.volley.Response.ErrorListener()
@@ -230,8 +246,8 @@ public class MainActivity extends Activity
                 public void onErrorResponse(VolleyError error)
                 {
                     //System.out.println("يوجد خطأ في تشغيل الفيديو :" + error.toString());
-                    Toast.makeText(MainActivity.this, "Msg3=>" + error.toString(), Toast.LENGTH_LONG).show();
-                    //showMsg("Msg3:",error.toString());
+                    //Toast.makeText(MainActivity.this, "Msg3=>" + error.toString(), Toast.LENGTH_LONG).show();
+                    showMsg("يوجد خطأ في تشغيل الفيديو :",error.toString());
                 }
             })
             {
@@ -245,7 +261,7 @@ public class MainActivity extends Activity
                 protected Map<String, String> getParams()
                 {
                     Map<String, String> params = new HashMap<String, String>();
-                    params.put("tvMac", getTV_MacAddress());
+                    params.put("tvMac", getMac());
                     return params;
                 }
             };
@@ -254,8 +270,8 @@ public class MainActivity extends Activity
         catch (Exception e)
         {
             // TODO: handle exception
-            Toast.makeText(MainActivity.this, "Msg4=>" + e, Toast.LENGTH_LONG).show();
-            //showMsg("Msg4:",e.toString());
+            //Toast.makeText(MainActivity.this, "Msg4=>" + e.toString(), Toast.LENGTH_LONG).show();
+            showMsg("يوجد خطأ في تشغيل الفيديو :",e.toString());
             //System.out.println("Play Video Error connecting"+e.toString());
         }
     }
@@ -278,15 +294,17 @@ public class MainActivity extends Activity
                         }
                         else
                         {
-
                             mainResponse=response;
+                            //videoView = (VideoView) findViewById(R.id.videoView1);
+                            //Toast.makeText(MainActivity.this, "Msg9=>" + mainResponse.toString(), Toast.LENGTH_LONG).show();
                             videoView = (VideoView) findViewById(R.id.videoView1);
-                            uri = Uri.parse(mainResponse);
+                            uri = Uri.parse(response);
                             videoView.setVideoURI(uri);
+                            mediaController = new MediaController(MainActivity.this);
+                            mediaController.setAnchorView(videoView);
+                            mediaController.setMediaPlayer(videoView);
                             videoView.requestFocus();
-                            //mediaController = new MediaController(MainActivity.this);
-                            //mediaController.setAnchorView(videoView);
-                            //mediaController.setAnimationCacheEnabled(true);
+                            mediaController.setAnimationCacheEnabled(true);
 
                             videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
@@ -303,13 +321,20 @@ public class MainActivity extends Activity
                                     playVideo();
                                 }
                             });
+                            videoView.setOnErrorListener(new MediaPlayer.OnErrorListener(){
+                                @Override
+                                public boolean onError(MediaPlayer mp, int what, int extra) {
+                                    showMsg("يوجد خطأ في أعادة تشغيل الفيديو :","يوجد خطأ في أعادة تشغيل الفيديو");
+                                    return false;
+                                }
+                            } );
                         }
 
                     }
                     catch (Exception e)
                     {
-                        Toast.makeText(MainActivity.this, "Msg5=>" + e, Toast.LENGTH_LONG).show();
-                        //showMsg("Msg5:",e.toString());
+                        //Toast.makeText(MainActivity.this, "Msg5=>" + e.toString(), Toast.LENGTH_LONG).show();
+                        showMsg("يوجد خطأ في أعادة تشغيل الفيديو :",e.toString());
                         //System.out.println("يوجد خطأ في أعادة تشغيل الفيديو :" + e.toString());
                     }
                 }
@@ -318,8 +343,8 @@ public class MainActivity extends Activity
                 @Override
                 public void onErrorResponse(VolleyError error)
                 {
-                    Toast.makeText(MainActivity.this, "Msg6=>" + error.toString(), Toast.LENGTH_LONG).show();
-                    //showMsg("Msg6:",error.toString());
+                    //Toast.makeText(MainActivity.this, "Msg6=>" + error.toString(), Toast.LENGTH_LONG).show();
+                    showMsg("Msg6:",error.toString());
                     //System.out.println("PlayVideo Fail to get response = " + error.toString());
                     //Toast.makeText(MainActivity.this, "Fail to get response = " + error, Toast.LENGTH_SHORT).show();
                 }
@@ -335,7 +360,7 @@ public class MainActivity extends Activity
                 protected Map<String, String> getParams()
                 {
                     Map<String, String> params = new HashMap<String, String>();
-                    params.put("tvMac", getTV_MacAddress());
+                    params.put("tvMac", getMac());
                     return params;
                 }
             };
@@ -344,10 +369,31 @@ public class MainActivity extends Activity
         catch (Exception e)
         {
             // TODO: handle exception
-            Toast.makeText(MainActivity.this, "Msg7=>" + e, Toast.LENGTH_LONG).show();
-            //showMsg("Msg7:",e.toString());
+            //Toast.makeText(MainActivity.this, "Msg7=>" + e.toString(), Toast.LENGTH_LONG).show();
+            showMsg("Msg7:",e.toString());
             //System.out.println("Play Video Error connecting"+e.toString());
         }
+    }
+
+    private String randomMACAddress()
+    {
+        Random rand = new Random();
+        byte[] macAddr = new byte[6];
+        rand.nextBytes(macAddr);
+
+        macAddr[0] = (byte)(macAddr[0] & (byte)254);  //zeroing last 2 bytes to make it unicast and locally adminstrated
+
+        StringBuilder sb = new StringBuilder(18);
+        for(byte b : macAddr){
+
+            if(sb.length() > 0)
+                sb.append(":");
+
+            sb.append(String.format("%02x", b));
+        }
+
+
+        return sb.toString();
     }
 
     public String getTvIP()
@@ -374,6 +420,7 @@ public class MainActivity extends Activity
             catch(Exception e)
             {
                 //Toast.makeText(this, "IP address Error "+e.toString(), Toast.LENGTH_LONG).show();
+                //showMsg("حطأ الأيبي أدرس",e.toString());
                 System.out.println("getIP Error connecting :"+e.toString());
 
             }
@@ -383,9 +430,9 @@ public class MainActivity extends Activity
             try
             {
                 List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-                for (NetworkInterface intf : interfaces)
+                for (NetworkInterface myinterface : interfaces)
                 {
-                    List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                    List<InetAddress> addrs = Collections.list(myinterface.getInetAddresses());
                     for (InetAddress addr : addrs)
                     {
                         if (!addr.isLoopbackAddress() && addr instanceof Inet4Address)
@@ -397,6 +444,7 @@ public class MainActivity extends Activity
             }
             catch(Exception e)
             {
+                //showMsg("حطأ الأيبي أدرس",e.toString());
                 //Toast.makeText(this, "IP address Error "+e.toString(), Toast.LENGTH_LONG).show();
                 System.out.println("getIP Error connecting :"+e.toString());
 
@@ -437,6 +485,7 @@ public class MainActivity extends Activity
             }
             catch(Exception e)
             {
+                //showMsg("حطأ الماك أدرس",e.toString());
                 //Toast.makeText(this, "Mac address Error "+e.toString(), Toast.LENGTH_LONG).show();
                 System.out.println("Mac address Error :"+e.toString());
             }
@@ -447,18 +496,18 @@ public class MainActivity extends Activity
             {
                 List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
                 //System.out.println("hello");
-                for (NetworkInterface intf : interfaces)
+                for (NetworkInterface myinterface : interfaces)
                 {
-                    for (int i=0; i<intf.getHardwareAddress().length;i++)
+                    for (int i=0; i<myinterface.getHardwareAddress().length;i++)
                     {
-                        String stringMacByte = Integer.toHexString(intf.getHardwareAddress()[i] & 0xFF);
+                        String stringMacByte = Integer.toHexString(myinterface.getHardwareAddress()[i] & 0xFF);
                         //System.out.println(stringMacByte.length());
                         if (stringMacByte.length() == 1)
                         {
                             //System.out.println("->"+"0" + stringMacByte);
                             stringMacByte = "0" + stringMacByte;
                         }
-                        if(intf.getHardwareAddress().length==i+1) {
+                        if(myinterface.getHardwareAddress().length==i+1) {
                             stringMac =stringMac + stringMacByte.toUpperCase();
                         }
                         else
@@ -470,25 +519,20 @@ public class MainActivity extends Activity
             }
             catch(Exception e)
             {
+                //showMsg("حطأ الماك أدرس",e.toString());
                 //Toast.makeText(this, "Mac address Error "+e.toString(), Toast.LENGTH_LONG).show();
                 System.out.println("Mac address Error :"+e.toString());
             }
 
         }
-        Toast.makeText(MainActivity.this, "Msg8=>" + stringMac, Toast.LENGTH_LONG).show();
+        //Toast.makeText(MainActivity.this, "Msg8=>" + stringMac.toString(), Toast.LENGTH_LONG).show();
         return stringMac;
     }
-
-    /*private boolean isNetworkConnected()
-    {
-        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(this.CONNECTIVITY_SERVICE);
-        return cm.getActiveNetworkInfo() != null;
-    }*/
 
     private boolean isNetworkConnected()
     {
         ConnectivityManager cm = (ConnectivityManager) this.getSystemService(this.CONNECTIVITY_SERVICE);
-        return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
+        return cm.getActiveNetworkInfo() != null;
     }
 
     public Boolean isWifiConnected()
@@ -534,8 +578,23 @@ public class MainActivity extends Activity
     private String getServerIP()
     {
         preferencesServerIP= getSharedPreferences(serverIPPrefFile, this.MODE_PRIVATE);
-        String servIP = preferencesServerIP.getString("serverIP",null);
-        return servIP;
+        return preferencesServerIP.getString("serverIP",null);
+    }
+
+    private void setMac(String macAddress)
+    {
+        //Toast.makeText(this, "IP address :"+ipaddress, Toast.LENGTH_LONG).show();
+        //System.out.println("IP address :"+ipaddress);
+        preferencesMacAddress=getSharedPreferences(macAddressPrefFile, this.MODE_PRIVATE);
+        editorMacAddress = preferencesMacAddress.edit();
+        editorMacAddress.putString("ethernetMacAddr", macAddress);
+        editorMacAddress.commit();
+    }
+
+    private String getMac()
+    {
+        preferencesMacAddress= getSharedPreferences(macAddressPrefFile, this.MODE_PRIVATE);
+        return preferencesMacAddress.getString("ethernetMacAddr",null);
     }
 
     private boolean isFirstTime()
@@ -567,37 +626,27 @@ public class MainActivity extends Activity
             Process  mIpProcess = runtime.exec("/system/bin/ping -c 1 "+ip);
             int mExitValue = mIpProcess.waitFor();
             //System.out.println(" mExitValue "+mExitValue);
-            Toast.makeText(this, " mExitValue "+mExitValue, Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, " mExitValue "+mExitValue, Toast.LENGTH_LONG).show();
 
             if(mExitValue==0){
                 myReturn=true;
             }else{
                 myReturn=false;
-                AlertDialog alertDialog0 = new AlertDialog.Builder(MainActivity.this).create();
-                alertDialog0.setTitle("حالة أتصال الشاشه مع السيرفر");
-                alertDialog0.setMessage("لا يوجد أتصال مع السيرفر, يرجى التواصل بمدير تقنية المعلومات");
-                alertDialog0.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int which)
-                    {
-                        dialog.dismiss();
-                        MainActivity.this.finish();
-                        System.exit(0);
-                    }
-                });
-                alertDialog0.show();
+                showMsg("حالة أتصال الشاشه مع السيرفر","لا يوجد أتصال مع السيرفر");
             }
         }
         catch (InterruptedException ignore)
         {
             ignore.printStackTrace();
-            Toast.makeText(this, "داخل ايكزيكيوت: "+ignore, Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, "داخل ايكزيكيوت: "+ignore, Toast.LENGTH_LONG).show();
+            showMsg("حالة أتصال الشاشه مع السيرفر","لا يوجد أتصال مع السيرفر"+ignore.toString());
             //System.out.println(" Exception:"+ignore);
         }
         catch (IOException e)
         {
-            e.printStackTrace();
-            Toast.makeText(this, "داخل ايكزيكيوت: "+ e, Toast.LENGTH_LONG).show();
+            //e.printStackTrace();
+            //Toast.makeText(this, "داخل ايكزيكيوت: "+ e, Toast.LENGTH_LONG).show();
+            showMsg("حالة أتصال الشاشه مع السيرفر","لا يوجد أتصال مع السيرفر "+e.toString());
             //System.out.println(" Exception:"+e);
         }
         return myReturn;
@@ -614,13 +663,14 @@ public class MainActivity extends Activity
                     {
                         try
                         {
-                            Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
+                            //Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
                             System.out.println("Data inserted to database:" + response);
                         }
                         catch (Exception e)
                         {
-                            Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
-                            System.out.println("AddDataToDatabase Error :" + e.toString());
+                            showMsg("حطأ في قاعدة البيانات",e.toString());
+                            //Toast.makeText(MainActivity.this,response,Toast.LENGTH_LONG).show();
+                            //System.out.println("AddDataToDatabase Error :" + e.toString());
                         }
                     }
                 },new com.android.volley.Response.ErrorListener()
@@ -628,8 +678,9 @@ public class MainActivity extends Activity
                     @Override
                     public void onErrorResponse(VolleyError error)
                     {
-                        Toast.makeText(MainActivity.this,error.toString(),Toast.LENGTH_LONG).show();
-                        System.out.println("Fail to insert data to database = " + error.toString());
+                        //Toast.makeText(MainActivity.this,error.toString(),Toast.LENGTH_LONG).show();
+                        showMsg("حطأ في قاعدة البيانات",error.toString());
+                        //System.out.println("Fail to insert data to database = " + error.toString());
                     }
                 })
                 {
