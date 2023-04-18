@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.net.Uri;
 import android.app.Activity;
 import android.widget.MediaController;
-import android.widget.Toast;
 import android.widget.VideoView;
 import android.media.MediaPlayer;
 import java.io.IOException;
@@ -27,8 +26,6 @@ import com.android.volley.toolbox.Volley;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
-import android.content.Context;
 
 public class MainActivity extends Activity
 {
