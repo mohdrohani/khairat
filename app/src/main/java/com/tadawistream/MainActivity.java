@@ -73,7 +73,7 @@ public class MainActivity extends Activity
             if(isNetworkConnected())
             {
                 //Toast.makeText(this, "is First Time:"+isFirstTime(), Toast.LENGTH_LONG).show();
-                //System.out.println("is First Time:"+isFirstTime());
+                System.out.println("is First Time:"+isFirstTime());
                 if(isFirstTime())
                 {
                     Intent intent = new Intent(this, init.class);
