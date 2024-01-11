@@ -21,15 +21,16 @@
     <application
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
+        android:largeHeap="true"
         android:logo="@mipmap/ta_icon"
         android:icon="@mipmap/ta_icon"
+        android:banner="@mipmap/ic_banner"
         android:installLocation="internalOnly"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.TadawiStream"
         android:usesCleartextTraffic="true"
-        tools:targetApi="m"
-        android:banner="@mipmap/ta_icon">
+        tools:targetApi="m">
         <activity
             android:name=".init"
             android:exported="true">
@@ -42,7 +43,9 @@
             android:exported="true"
             android:screenOrientation="landscape"
             android:logo="@mipmap/ta_icon"
-            android:icon="@mipmap/ta_icon">
+            android:icon="@mipmap/ta_icon"
+            android:banner="@mipmap/ic_banner"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

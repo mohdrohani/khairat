@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.tadawistream'
+    namespace 'com.khairat'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.tadawistream"
+        applicationId "com.khairat"
         minSdk 21
         targetSdk 33
         versionCode 1
